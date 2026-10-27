@@ -199,6 +199,14 @@ test("cadastros e orçamento pela interface com API isolada de teste", async ({
       .getByRole("navigation", { name: "Menu principal" })
       .getByRole("link", { name: "Visão geral" })
       .click();
+  if (test.info().project.name === "mobile") {
+    await expect
+      .poll(async () => {
+        const bounds = await page.locator(".sidebar").boundingBox();
+        return bounds ? bounds.x + bounds.width : 0;
+      })
+      .toBeLessThanOrEqual(1);
+  }
   await page
     .getByLabel("Produto analisado")
     .selectOption(String(tables.products[0].id));

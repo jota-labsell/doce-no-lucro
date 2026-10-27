@@ -1,3 +1,4 @@
+import { BakeryArt } from "../components/BakeryArt";
 import { Brand } from "../components/Brand";
 import { Link } from "react-router-dom";
 import { Calculator, FileText, Heart, ArrowUpRight, Check } from "lucide-react";
@@ -33,6 +34,14 @@ export function Landing() {
             </p>
           </div>
           <aside className="hero-paper" aria-label="Do custo à proposta">
+            <div className="hero-confection">
+              <BakeryArt />
+              <span className="hero-seal">
+                Feito de talento.
+                <br />
+                <strong>E de boas escolhas.</strong>
+              </span>
+            </div>
             <p className="eyebrow">DO CUSTO À PROPOSTA</p>
             <h2>
               Seu trabalho tem valor.

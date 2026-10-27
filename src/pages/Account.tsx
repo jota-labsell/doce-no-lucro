@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BakeryArt } from "../components/BakeryArt";
 import { PrivateImage } from "../components/PrivateImage";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -25,17 +26,30 @@ export function Dashboard({ data }: PageProps) {
   return (
     <>
       <Heading eyebrow="VISÃO GERAL" title="Seu negócio, com mais clareza" />
-      <div className="overview-actions">
-        <p>Cadastros, custos e propostas da sua confeitaria.</p>
-        <div className="actions">
-          <Link className="button secondary" to="/app/ingredientes">
-            Cadastrar ingrediente
-          </Link>
-          <Link className="button" to="/app/orcamentos">
-            Criar orçamento <ArrowUpRight size={16} />
-          </Link>
+      <section className="overview-actions bakery-banner">
+        <div className="bakery-banner-copy">
+          <p className="banner-kicker">SUA CONFEITARIA, SEU PRÓXIMO CAPÍTULO</p>
+          <h2>
+            Talento no doce.
+            <br />
+            <em>Confiança no preço.</em>
+          </h2>
+          <p>
+            Cada receita tem uma história.
+            <br />
+            Cada detalhe do seu trabalho tem valor.
+          </p>
+          <div className="actions">
+            <Link className="button secondary" to="/app/ingredientes">
+              Cadastrar ingrediente
+            </Link>
+            <Link className="button" to="/app/orcamentos">
+              Criar orçamento <ArrowUpRight size={16} />
+            </Link>
+          </div>
         </div>
-      </div>
+        <BakeryArt />
+      </section>
       <div className="stats">
         {[
           ["Produtos", data.products.length],
