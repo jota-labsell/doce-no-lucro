@@ -13,13 +13,14 @@ async function asUser(id: string) {
 }
 beforeAll(async () => {
   await db.exec(
-    `create role authenticated;create schema auth;create schema storage;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;insert into auth.users values('${a}'),('${b}');`,
+    `create role authenticated;create role anon;create schema auth;create schema storage;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;insert into auth.users values('${a}'),('${b}');`,
   );
   await db.exec(
     readFileSync("supabase/migrations/202610270001_initial.sql", "utf8"),
   );
+  await db.exec(readFileSync("supabase/migrations/202610270002_authenticated_grants.sql", "utf8"));
   await db.exec(
-    `grant usage on schema public,auth,storage to authenticated;grant select,insert,update,delete on all tables in schema public,storage to authenticated;grant execute on function auth.uid() to authenticated;`,
+    `grant usage on schema auth,storage to authenticated;grant select,insert,update,delete on all tables in schema storage to authenticated;grant execute on function auth.uid() to authenticated;`,
   );
 });
 afterAll(() => db.close());
@@ -51,7 +52,7 @@ it("bloqueia leitura, alteração, exclusão e inserção para outra usuária", 
       `insert into public.ingredients(user_id,name,price,quantity,unit) values($1,'Ataque',1,1,'g')`,
       [a],
     ),
-  ).rejects.toThrow(/row-level security/);
+  ).rejects.toThrow(/row-level security|permission denied/);
   await asUser(a);
   expect(
     (await db.query("select * from public.ingredients")).rows,
@@ -100,7 +101,7 @@ it("mantém histórico, calcula total no servidor e bloqueia alterações após 
       `update public.quote_items set price=1 where quote_id=$1 returning *`,
       [q],
     ),
-  ).resolves.toMatchObject({ rows: [] });
+  ).rejects.toThrow(/permission denied/);
 });
 it("isola itens, arquivos e bloqueia concessão de acesso premium", async () => {
   await asUser(b);
@@ -112,13 +113,13 @@ it("isola itens, arquivos e bloqueia concessão de acesso premium", async () => 
       `insert into public.entitlements(user_id,plan_id) values($1,'fundadora')`,
       [b],
     ),
-  ).rejects.toThrow(/row-level security/);
+  ).rejects.toThrow(/row-level security|permission denied/);
   await expect(
     db.query(
       `insert into storage.objects(bucket_id,name) values('brand-assets',$1)`,
       [a + "/logos/test.png"],
     ),
-  ).rejects.toThrow(/row-level security/);
+  ).rejects.toThrow(/row-level security|permission denied/);
   await db.query(
     `insert into storage.objects(bucket_id,name) values('brand-assets',$1)`,
     [b + "/logos/test.png"],
@@ -180,7 +181,7 @@ it("bloqueia transferência de propriedade e valores não finitos", async () => 
   await asUser(a);
   await expect(
     db.query(`update public.ingredients set user_id=$1 where id=$2`, [b, i]),
-  ).rejects.toThrow(/row-level security/);
+  ).rejects.toThrow(/row-level security|permission denied/);
   await expect(
     db.query(`update public.ingredients set price='NaN' where id=$1`, [i]),
   ).rejects.toThrow();

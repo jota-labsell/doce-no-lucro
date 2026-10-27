@@ -17,7 +17,7 @@ npm run dev
 
 ## Configuração do Supabase
 
-1. No projeto correto, revise e aplique `supabase/migrations/202610270001_initial.sql` pelo SQL Editor. A migration é transacional e deve ser executada uma única vez. Alternativamente, com Supabase CLI autenticada: `supabase link --project-ref SEU_REF` e `supabase db push`. Nunca versione a senha usada pela CLI.
+1. No projeto correto, revise e aplique, em ordem, `supabase/migrations/202610270001_initial.sql` e `supabase/migrations/202610270002_authenticated_grants.sql` pelo SQL Editor. Cada migration é transacional; execute cada uma uma única vez. Se a primeira já foi aplicada, execute somente a segunda. A segunda define privilégios explícitos para contas autenticadas, sem depender dos padrões do projeto e sem permitir acesso anônimo. Alternativamente, com Supabase CLI autenticada: `supabase link --project-ref SEU_REF` e `supabase db push`. Nunca versione a senha usada pela CLI.
 2. Auth → URL Configuration: configure Site URL e permita os redirects da origem local e, futuramente, da produção para `/app` e `/nova-senha`. Confirme o endereço/porta usados pelo Vite. Ative confirmação por e-mail.
 3. Para testes controlados, desative novos cadastros públicos e crie/convide contas de teste pelo painel administrativo. A tela de cadastro usa Supabase Auth e respeita essa configuração. Só habilite inscrições públicas quando estiver preparado para recebê-las.
 4. A migration cria o bucket **privado** `brand-assets`, com limite de 2 MB por arquivo, MIME PNG/JPEG/WebP e políticas por pasta `user_id`. Não torne esse bucket público. Imagens são lidas por URLs assinadas de curta duração. A interface não envia SVG.
