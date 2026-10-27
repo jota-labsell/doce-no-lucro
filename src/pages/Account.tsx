@@ -5,9 +5,15 @@ import { Link } from "react-router-dom";
 import type { PageProps } from "./Workshop";
 import { saveRecord, uploadImage } from "../lib/data";
 import { requireClient } from "../lib/supabase";
-import { money, d, quoteTotals } from "../lib/finance";
+import { money, d, quoteTotals, productCost } from "../lib/finance";
 import { Field, Heading, ErrorBox, errorText, Notice } from "../components/ui";
 export function Dashboard({ data }: PageProps) {
+  const [selected, setSelected] = useState(data.products[0]?.id || "");
+  const product = data.products.find((p) => p.id === selected);
+  const cost = product
+    ? productCost(product, data.recipes, data.ingredients)
+    : null;
+  const contribution = product && cost ? d(product.price).minus(cost) : null;
   const approved = data.quotes.filter((q) => q.status === "aprovado");
   const value = approved.reduce(
     (s, q) =>
@@ -18,31 +24,18 @@ export function Dashboard({ data }: PageProps) {
   );
   return (
     <>
-      <Heading
-        eyebrow="UM NOVO DIA PARA CRESCER"
-        title="Seu negócio, com mais clareza"
-      />
-      <section className="welcome">
-        <div>
-          <span className="badge">CUIDADO EM CADA DETALHE</span>
-          <h2>
-            Você cuida dos doces.
-            <br />
-            <em>Vamos cuidar das contas?</em>
-          </h2>
-          <p>
-            Organize seus custos e transforme cada proposta
-            <br />
-            em uma boa primeira impressão.
-          </p>
+      <Heading eyebrow="VISÃO GERAL" title="Seu negócio, com mais clareza" />
+      <div className="overview-actions">
+        <p>Cadastros, custos e propostas da sua confeitaria.</p>
+        <div className="actions">
+          <Link className="button secondary" to="/app/ingredientes">
+            Cadastrar ingrediente
+          </Link>
           <Link className="button" to="/app/orcamentos">
             Criar orçamento <ArrowUpRight size={16} />
           </Link>
         </div>
-        <span className="welcome-flower" aria-hidden="true">
-          ✿
-        </span>
-      </section>
+      </div>
       <div className="stats">
         {[
           ["Produtos", data.products.length],
@@ -56,6 +49,69 @@ export function Dashboard({ data }: PageProps) {
           </article>
         ))}
       </div>
+      <section className="cost-overview" aria-label="Análise de produto">
+        <div className="section-title">
+          <div>
+            <p className="eyebrow">CUSTO E PREÇO</p>
+            <h2>Quanto fica em cada venda?</h2>
+          </div>
+          <Field label="Produto analisado">
+            <select
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+            >
+              <option value="">Selecione um produto</option>
+              {data.products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                  {!p.active ? " · inativo" : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        {product && cost && contribution ? (
+          <>
+            <div className="financial-grid">
+              <div>
+                <span>Custo de produção</span>
+                <strong>{money(cost)}</strong>
+                <small>Por {product.unit}</small>
+              </div>
+              <div>
+                <span>Preço cadastrado</span>
+                <strong>{money(product.price)}</strong>
+                <small>Por {product.unit}</small>
+              </div>
+              <div
+                className={contribution.isNegative() ? "negative" : "positive"}
+              >
+                <span>Resultado antes de taxas</span>
+                <strong>{money(contribution)}</strong>
+                <small>
+                  {d(product.price).gt(0)
+                    ? contribution.div(product.price).mul(100).toFixed(1) +
+                      "% do preço"
+                    : "Percentual indisponível para preço zero"}
+                </small>
+              </div>
+            </div>
+            <p className="fine">
+              Diferença entre preço e custo atual. Taxas de venda não estão
+              incluídas; não representa lucro líquido.
+            </p>
+          </>
+        ) : (
+          <p className="analysis-empty">
+            {data.products.length
+              ? "Selecione um produto para consultar os valores reais."
+              : "Cadastre um produto para comparar seu custo de produção com o preço de venda."}
+          </p>
+        )}
+        <Link className="analysis-link" to="/app/precificacao">
+          Calcular preço sugerido com margem e taxas <ArrowUpRight size={16} />
+        </Link>
+      </section>
       <section className="panel approved">
         <div>
           <p className="eyebrow">PROPOSTAS APROVADAS</p>
@@ -97,8 +153,8 @@ export function Dashboard({ data }: PageProps) {
           )}
         </section>
         <section className="panel">
-          <p className="eyebrow">UM PASSO DE CADA VEZ</p>
-          <h2>Prepare sua confeitaria</h2>
+          <p className="eyebrow">ORGANIZAÇÃO</p>
+          <h2>Cadastros essenciais</h2>
           {[
             [
               "1",

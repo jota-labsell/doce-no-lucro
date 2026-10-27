@@ -19,6 +19,7 @@ export default defineConfig({
     },
   },
   projects: [
+    { name: "tablet", use: { viewport: { width: 834, height: 1112 } } },
     { name: "desktop", use: { viewport: { width: 1440, height: 1000 } } },
     {
       name: "mobile",

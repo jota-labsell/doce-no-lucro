@@ -67,23 +67,20 @@ test("cadastros e orçamento pela interface com API isolada de teste", async ({
     quotes: [],
     bakeries: [],
   };
-  await page.route(
-    "https://doce-test.supabase.co/**",
-    async (route) => {
-      const req = route.request();
-      const url = new URL(req.url());
-      if (url.pathname.includes("/auth/")) return route.fulfill({ json: user });
-      const table = url.pathname.split("/").pop()!;
-      if (req.method() === "POST") {
-        const record = req.postDataJSON();
-        const index = tables[table].findIndex((r) => r.id === record.id);
-        if (index >= 0) tables[table][index] = record;
-        else tables[table].push(record);
-        return route.fulfill({ status: 201, json: null });
-      }
-      return route.fulfill({ json: tables[table] || [] });
-    },
-  );
+  await page.route("https://doce-test.supabase.co/**", async (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    if (url.pathname.includes("/auth/")) return route.fulfill({ json: user });
+    const table = url.pathname.split("/").pop()!;
+    if (req.method() === "POST") {
+      const record = req.postDataJSON();
+      const index = tables[table].findIndex((r) => r.id === record.id);
+      if (index >= 0) tables[table][index] = record;
+      else tables[table].push(record);
+      return route.fulfill({ status: 201, json: null });
+    }
+    return route.fulfill({ json: tables[table] || [] });
+  });
   await page.goto("/app");
   await expect(
     page.getByRole("heading", { name: "Seu negócio, com mais clareza" }),
@@ -157,6 +154,59 @@ test("cadastros e orçamento pela interface com API isolada de teste", async ({
   ).toBe(true);
   await page.screenshot({
     path: `test-results/quotes-${test.info().project.name}.png`,
+    fullPage: true,
+  });
+  await go("precificacao");
+  await page.getByLabel("Custo unitário (R$)").fill("10");
+  await page.getByLabel("Taxas sobre a venda (%)").fill("10");
+  const result = page.getByRole("region", {
+    name: "Resultado da precificação",
+  });
+  await expect(result.locator(".price")).toHaveText(/16,67/);
+  await expect(result).toContainText("30.00%");
+  await page.getByLabel("Preço escolhido (opcional, R$)").fill("5");
+  await expect(result.locator(".negative")).toContainText(/5,50/);
+  const marginBounds = await page
+    .getByLabel("Margem desejada (%)")
+    .boundingBox();
+  expect(marginBounds!.width).toBeGreaterThan(100);
+  await page.getByLabel("Margem desejada (%)").fill("90");
+  await expect(page.getByRole("alert")).toContainText("menores que 100%");
+  await expect(result.locator(".price")).not.toBeVisible();
+  await page.getByLabel("Margem desejada (%)").fill("30");
+  await page.getByLabel("Preço escolhido (opcional, R$)").fill("");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: `test-results/pricing-${test.info().project.name}.png`,
+    fullPage: true,
+  });
+  if (test.info().project.name === "mobile") {
+    await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
+    await expect(page.locator(".mobile-menu")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await page
+      .getByRole("navigation", { name: "Menu principal" })
+      .getByRole("link", { name: "Visão geral" })
+      .click();
+  } else
+    await page
+      .getByRole("navigation", { name: "Menu principal" })
+      .getByRole("link", { name: "Visão geral" })
+      .click();
+  await page
+    .getByLabel("Produto analisado")
+    .selectOption(String(tables.products[0].id));
+  await expect(
+    page.getByRole("region", { name: "Análise de produto" }),
+  ).toContainText(/3,00/);
+  await page.screenshot({
+    path: `test-results/dashboard-populated-${test.info().project.name}.png`,
     fullPage: true,
   });
 });

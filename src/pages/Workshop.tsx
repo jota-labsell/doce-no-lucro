@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { PrivateImage } from "../components/PrivateImage";
 import type { Data } from "../lib/data";
@@ -538,92 +539,146 @@ export function Pricing({ data }: PageProps) {
   }
   return (
     <>
-      <Heading eyebrow="VALORIZE CADA DOCE" title="Precificação" />
-      <div className="split">
-        <section className="panel">
-          <h2>Seu preço, com clareza</h2>
-          <Field label="Usar custo atual de">
-            <select
-              value={source}
-              onChange={(e) => {
-                setSource(e.target.value);
-                const [kind, id] = e.target.value.split(":");
-                if (kind === "r") {
-                  const r = data.recipes.find((r) => r.id === id)!;
-                  setCost(recipeCost(r, data.ingredients).unit.toString());
-                }
-                if (kind === "p") {
-                  const p = data.products.find((p) => p.id === id)!;
-                  setCost(
-                    productCost(p, data.recipes, data.ingredients).toString(),
-                  );
-                }
-              }}
-            >
-              <option value="">Informar manualmente</option>
-              {data.recipes.map((r) => (
-                <option key={r.id} value={"r:" + r.id}>
-                  Receita: {r.name}
-                </option>
-              ))}
-              {data.products.map((p) => (
-                <option key={p.id} value={"p:" + p.id}>
-                  Produto: {p.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <NumberField
-            label="Custo unitário (R$)"
-            value={cost}
-            onChange={setCost}
-          />
-          <NumberField
-            label="Margem desejada (%)"
-            value={margin}
-            onChange={setMargin}
-          />
-          <NumberField
-            label="Taxas sobre a venda (%)"
-            value={fees}
-            onChange={setFees}
-          />
-          <NumberField
-            label="Custo adicional por unidade (R$)"
-            value={extra}
-            onChange={setExtra}
-          />
-          <NumberField
-            label="Quantidade no lote de venda"
-            value={batch}
-            onChange={setBatch}
-            min={0.000001}
-          />
-          <Field label="Preço escolhido (opcional, R$)">
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={manual}
-              onChange={(e) => setManual(e.target.value)}
-            />
-          </Field>
-          <small>
-            Não repita aqui despesas já incluídas no custo da receita.
-          </small>
+      <Heading eyebrow="CUSTOS E MARGENS" title="Precificação" />
+      <p className="page-description">
+        Defina um preço que considere o seu custo, a margem desejada e as taxas
+        de venda.
+      </p>
+      <nav className="workflow" aria-label="Etapas do cálculo">
+        <Link to="/app/ingredientes">
+          <span>01</span> Ingredientes
+        </Link>
+        <Link to="/app/receitas">
+          <span>02</span> Receita e rendimento
+        </Link>
+        <span aria-current="step">
+          <span>03</span> Preço de venda
+        </span>
+      </nav>
+      <div className="pricing-layout">
+        <section className="pricing-inputs">
+          <fieldset>
+            <legend>
+              <span>1</span> Custo por unidade de venda
+            </legend>
+            <p>Use o custo atual de um cadastro ou informe um valor.</p>
+            <Field label="Usar custo atual de">
+              <select
+                value={source}
+                onChange={(e) => {
+                  setSource(e.target.value);
+                  const [kind, id] = e.target.value.split(":");
+                  if (kind === "r")
+                    setCost(
+                      recipeCost(
+                        data.recipes.find((r) => r.id === id)!,
+                        data.ingredients,
+                      ).unit.toString(),
+                    );
+                  if (kind === "p")
+                    setCost(
+                      productCost(
+                        data.products.find((p) => p.id === id)!,
+                        data.recipes,
+                        data.ingredients,
+                      ).toString(),
+                    );
+                }}
+              >
+                <option value="">Informar manualmente</option>
+                {data.recipes.map((r) => (
+                  <option key={r.id} value={"r:" + r.id}>
+                    Receita: {r.name}
+                  </option>
+                ))}
+                {data.products.map((p) => (
+                  <option key={p.id} value={"p:" + p.id}>
+                    Produto: {p.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="form-grid">
+              <NumberField
+                label="Custo unitário (R$)"
+                value={cost}
+                onChange={setCost}
+              />
+              <NumberField
+                label="Custo adicional por unidade (R$)"
+                value={extra}
+                onChange={setExtra}
+              />
+            </div>
+            <small>
+              Embalagem, mão de obra e outras despesas já incluídas na receita
+              não devem ser repetidas aqui.
+            </small>
+          </fieldset>
+          <fieldset>
+            <legend>
+              <span>2</span> Margem e condições de venda
+            </legend>
+            <div className="form-grid">
+              <NumberField
+                label="Margem desejada (%)"
+                value={margin}
+                onChange={setMargin}
+              />
+              <NumberField
+                label="Taxas sobre a venda (%)"
+                value={fees}
+                onChange={setFees}
+              />
+              <NumberField
+                label="Quantidade no lote de venda"
+                value={batch}
+                onChange={setBatch}
+                min={0.000001}
+              />
+              <Field label="Preço escolhido (opcional, R$)">
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={manual}
+                  onChange={(e) => setManual(e.target.value)}
+                  placeholder="Usar preço sugerido"
+                />
+              </Field>
+            </div>
+          </fieldset>
         </section>
-        <section className="panel price-result">
-          <p className="eyebrow">PREÇO SUGERIDO</p>
-          <ErrorBox error={error} />
+        <section
+          className="price-result"
+          aria-label="Resultado da precificação"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <div className="result-heading">
+            <p className="eyebrow">RESULTADO DO CÁLCULO</p>
+            <h2>Preço de venda sugerido</h2>
+            <ErrorBox error={error} />
+            {result && !error && (
+              <>
+                <strong className="price">{money(result.suggested)}</strong>
+                <p>Por unidade, considerando os percentuais informados.</p>
+              </>
+            )}
+          </div>
           {result && !error && (
             <>
-              <h2 className="price">{money(result.suggested)}</h2>
-              <p>Para a margem e taxas que você informou.</p>
-              <dl>
+              <dl className="result-values">
                 <dt>Preço escolhido</dt>
                 <dd>{money(result.price)}</dd>
                 <dt>Lucro estimado / unidade</dt>
-                <dd>{money(result.profit)}</dd>
+                <dd
+                  className={
+                    result.profit.isNegative() ? "negative" : "positive"
+                  }
+                >
+                  {money(result.profit)}
+                </dd>
                 <dt>Margem real</dt>
                 <dd>{result.margin.toFixed(2)}%</dd>
                 <dt>Markup</dt>
@@ -635,13 +690,23 @@ export function Pricing({ data }: PageProps) {
                 <dt>Diferença para sugestão</dt>
                 <dd>{money(result.difference)}</dd>
               </dl>
+              <p className="result-note">
+                Estimativa com os custos e taxas informados. Confira suas
+                despesas antes de definir o preço final.
+              </p>
             </>
           )}
-          <Notice>
-            Margem é a parte do preço que sobra após custos e taxas. Markup é o
-            multiplicador sobre o custo. Preço = custo ÷ (1 − margem − taxas).
-            Estimativas não garantem lucro.
-          </Notice>
+          <details className="calculation-help">
+            <summary>Como esse preço é calculado?</summary>
+            <p>
+              Preço = (custo + adicional) ÷ (1 − margem − taxas). Os percentuais
+              incidem sobre o preço de venda.
+            </p>
+            <p>
+              Margem é lucro dividido pelo preço. Markup é o multiplicador sobre
+              o custo. Estimativas não garantem lucro.
+            </p>
+          </details>
         </section>
       </div>
     </>

@@ -45,8 +45,7 @@ export function NumberField({
 export function Empty({ children }: { children: ReactNode }) {
   return (
     <div className="empty">
-      <span className="empty-flower">✿</span>
-      <h3>O próximo passo começa aqui</h3>
+      <h3>Nenhum registro por aqui</h3>
       <p>{children}</p>
     </div>
   );

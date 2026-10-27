@@ -1,3 +1,4 @@
+import { Brand } from "../components/Brand";
 import { Link } from "react-router-dom";
 import { Calculator, FileText, Heart, ArrowUpRight, Check } from "lucide-react";
 export function Landing() {
@@ -5,7 +6,7 @@ export function Landing() {
     <>
       <nav className="landing-nav">
         <Link className="brand" to="/">
-          ✿ Doce no Lucro
+          <Brand />
         </Link>
         <Link className="button secondary" to="/entrar">
           Entrar na minha conta <ArrowUpRight size={16} />
@@ -14,7 +15,7 @@ export function Landing() {
       <main className="landing">
         <section className="hero">
           <div>
-            <p className="eyebrow">FEITO PARA QUEM EMPREENDE COM DOÇURA</p>
+            <p className="eyebrow">GESTÃO PARA CONFEITARIAS INDEPENDENTES</p>
             <h1>
               Seu talento faz doces.
               <br />
@@ -31,25 +32,40 @@ export function Landing() {
               Simples no celular. Cuidadoso com cada detalhe.
             </p>
           </div>
-          <div className="hero-paper">
-            <span className="paper-flower">✿</span>
-            <p className="eyebrow">DA SUA COZINHA PARA NOVAS POSSIBILIDADES</p>
+          <aside className="hero-paper" aria-label="Do custo à proposta">
+            <p className="eyebrow">DO CUSTO À PROPOSTA</p>
             <h2>
-              Mais carinho no fazer.
+              Seu trabalho tem valor.
               <br />
-              Mais clareza no cobrar.
+              Conheça cada parte dele.
             </h2>
-            <div className="paper-row">
-              <Calculator /> Custos que fazem sentido
-            </div>
-            <div className="paper-row">
-              <FileText /> Propostas com a sua marca
-            </div>
-            <div className="paper-row">
-              <Heart /> Seu negócio, do seu jeito
-            </div>
-            <small>Conheça os recursos do Doce no Lucro</small>
-          </div>
+            {[
+              [
+                "01",
+                "Organize as compras",
+                "Preço, quantidade e unidade de cada ingrediente.",
+              ],
+              [
+                "02",
+                "Encontre o custo real",
+                "Receita, rendimento, embalagem e mão de obra.",
+              ],
+              [
+                "03",
+                "Decida como vender",
+                "Margem, taxas e uma proposta com sua marca.",
+              ],
+            ].map(([n, title, text]) => (
+              <div className="paper-row" key={n}>
+                <span>{n}</span>
+                <div>
+                  <strong>{title}</strong>
+                  <p>{text}</p>
+                </div>
+              </div>
+            ))}
+            <small>Um fluxo de trabalho para usar no dia a dia.</small>
+          </aside>
         </section>
         <section className="feature-grid">
           {[
@@ -133,7 +149,9 @@ export function Landing() {
         </section>
       </main>
       <footer>
-        <span>✿ Doce no Lucro</span>
+        <span>
+          <Brand />
+        </span>
         <Link to="/privacidade">Privacidade</Link>
         <Link to="/termos">Termos de uso</Link>
         <Link to="/contato">Contato</Link>

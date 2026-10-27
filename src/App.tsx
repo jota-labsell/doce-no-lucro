@@ -1,3 +1,4 @@
+import { Brand } from "./components/Brand";
 import { useEffect, useState } from "react";
 import {
   BrowserRouter,
@@ -45,10 +46,18 @@ function Workspace({ session }: { session: Session | null }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
   const [menu, setMenu] = useState(false);
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    if (saved) {
+      const timer = setTimeout(() => setSaved(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [saved]);
   const location = useLocation();
   useEffect(() => setMenu(false), [location.pathname]);
   async function refresh() {
     setData(await loadData());
+    setSaved(true);
     setError("");
   }
   useEffect(() => {
@@ -61,12 +70,15 @@ function Workspace({ session }: { session: Session | null }) {
   const props = data ? { data, refresh } : null;
   return (
     <div className="workspace">
+      <a className="skip-link" href="#main-content">
+        Ir para o conteúdo
+      </a>
       <aside className={menu ? "sidebar open" : "sidebar"}>
         <Link to="/app" className="brand">
-          ✿ Doce no Lucro
+          <Brand />
         </Link>
         <p className="sidebar-caption">CUIDE DO SEU NEGÓCIO</p>
-        <nav>
+        <nav aria-label="Menu principal">
           {nav.map(([path, label, Icon]) => (
             <NavLink
               key={path}
@@ -79,11 +91,9 @@ function Workspace({ session }: { session: Session | null }) {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <span className="badge">FEITO COM CARINHO</span>
           <p>
-            Seu talento merece
-            <br />
-            um negócio que floresce.
+            Gestão de custos
+            <br />e propostas.
           </p>
           <button
             className="text-button"
@@ -108,17 +118,31 @@ function Workspace({ session }: { session: Session | null }) {
           <button
             className="mobile-menu secondary"
             aria-label={menu ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menu}
             onClick={() => setMenu(!menu)}
           >
             {menu ? <X /> : <Menu />}
           </button>
-          <span>Organização que dá gosto.</span>
+          <span>
+            Confeitaria <span aria-hidden="true">/</span>{" "}
+            <strong>
+              {nav.find(
+                ([path]) =>
+                  location.pathname === `/app${path ? `/${path}` : ""}`,
+              )?.[1] || "Visão geral"}
+            </strong>
+          </span>
           <div className="user-chip">
             <span>{session.user.email?.slice(0, 1).toUpperCase()}</span>
             <small>{data?.bakery.name || "Minha confeitaria"}</small>
           </div>
         </div>
-        <main className="content">
+        <main className="content" id="main-content">
+          {saved && (
+            <div className="save-feedback" role="status">
+              Dados atualizados.
+            </div>
+          )}
           <ErrorBox error={error} />
           {error && (
             <button

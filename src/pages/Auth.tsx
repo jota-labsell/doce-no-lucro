@@ -1,3 +1,4 @@
+import { Brand } from "../components/Brand";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { requireClient, supabase } from "../lib/supabase";
@@ -13,7 +14,7 @@ export function Auth({ recovery = false }: { recovery?: boolean }) {
   return (
     <main className="auth-page">
       <Link to="/" className="brand">
-        ✿ Doce no Lucro
+        <Brand />
       </Link>
       <section className="panel auth-card">
         <p className="eyebrow">UM PASSO PARA O SEU NEGÓCIO</p>
